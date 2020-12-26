@@ -122,7 +122,10 @@ function solve(sudokuGrid, emptyIndexes) {
   return false;
 }
 
+const label = 'sudoku puzzle';
+console.time(label);
 solve(sudokuGrid, emptyIndexes);
+console.timeEnd(label);
 
 printSudoku(sudokuGrid);
 printSudoku(sudokuGridSol);
