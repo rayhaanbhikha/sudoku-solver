@@ -96,6 +96,17 @@ const getEmptyIndexes = (sudokuGrid) => {
 const emptyIndexes = getEmptyIndexes(sudokuGrid);
 printSudoku(sudokuGrid);
 
+function checkSolution(grid, solGrid) {
+  for (let i = 0; i < grid.length; i++) {
+    for (let j = 0; j < grid.length; j++) {
+      const element = grid[i][j];
+      const solElement = solGrid[i][j];
+      if (element !== solElement) return false;
+    }    
+  }
+  return true;
+}
+
 function solve(sudokuGrid, emptyIndexes) {
   if (emptyIndexes.length === 0) {
     return true;
@@ -127,5 +138,4 @@ console.time(label);
 solve(sudokuGrid, emptyIndexes);
 console.timeEnd(label);
 
-printSudoku(sudokuGrid);
-printSudoku(sudokuGridSol);
+console.log(checkSolution(sudokuGrid, sudokuGridSol));
