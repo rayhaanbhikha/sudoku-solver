@@ -1,23 +1,24 @@
 const fs = require('fs');
-const { Box } = require('./box');
 
+const sudokuGrid = fs.readFileSync('../sudoku.txt', { encoding: 'utf-8' }).split('\n').map(r => r.split(' '));
+const sudokuGridSol = fs.readFileSync('../sudoku-solution.txt', { encoding: 'utf-8' }).split('\n').map(r => r.split(' '));
 
-const sudokuPuzzle = fs.readFileSync('../sudoku.txt', { encoding: 'utf-8' }).split('\n').map(r => r.split(' '));
+const emptyValue = '0';
 
-const printSudoku = (sudokuPuzzle) => {
-  for (let i = 0; i < sudokuPuzzle.length; i++) {
+const printSudoku = (sudokuGrid) => {
+  for (let i = 0; i < sudokuGrid.length; i++) {
     if (i % 3 === 0) {
       console.log('');
     }
-    for (let j = 0; j < sudokuPuzzle.length; j++) {
+    for (let j = 0; j < sudokuGrid.length; j++) {
       if (j % 3 === 0) {
         process.stdout.write(' ');
       }
-      const { value } = sudokuPuzzle[i][j];
-      if (value === 0) {
+      const element = sudokuGrid[i][j];
+      if (element === '0') {
         process.stdout.write(`_\ `)
       } else {
-        process.stdout.write(`${value}\ `)
+        process.stdout.write(`${element}\ `)
       }
     }
     console.log('');
@@ -25,37 +26,105 @@ const printSudoku = (sudokuPuzzle) => {
   console.log('');
 }
 
-const emptyIndexes = [];
+const getPossibleValues = (sudokuGrid, row, col) => {
+  const valuesThatAlreadyExist = new Set();
 
-// init grid.
-const grid = []
-for (let i = 0; i < sudokuPuzzle.length; i++) {
-  const row = [];
-  for (let j = 0; j < sudokuPuzzle.length; j++) {
-    const element = sudokuPuzzle[i][j];
-    if (element === '0') {
-      emptyIndexes.push({ i, j });
-    }
-    row.push(new Box(i, j, element, grid));
+  // read column.
+  for (let i = 0; i < sudokuGrid.length; i++) {
+    if (i === row) continue;
+    const element = sudokuGrid[i][col]
+    if(element !== '0') valuesThatAlreadyExist.add(element);
   }
-  grid.push(row);
+
+  // read row.
+  for (let j = 0; j < sudokuGrid.length; j++) {
+    if (j === col) continue;
+    const element = sudokuGrid[row][j];
+    if(element !== emptyValue) valuesThatAlreadyExist.add(element);
+  }
+
+  let cube = {}
+  if (row >= 0 && row <= 2) {
+    cube.rowMin = 0;
+  } else if (row >= 3 && row <= 5) {
+    cube.rowMin = 3;
+  } else {
+    cube.rowMin = 6;
+  }
+
+  if (col >= 0 && col <= 2) {
+    cube.colMin = 0;
+  } else if (col >= 3 && col <= 5) {
+    cube.colMin = 3;
+  } else {
+    cube.colMin = 6;
+  }
+
+  cube.rowMax = cube.rowMin + 2;
+  cube.colMax = cube.colMin + 2;
+  // read inner cube.
+  for (let i = cube.rowMin; i <= cube.rowMax; i++) {
+    for (let j = cube.colMin; j <= cube.colMax; j++) {
+      if (j === col || i === row) continue;
+      const element = sudokuGrid[i][j];
+      if(element !== emptyValue) valuesThatAlreadyExist.add(element);
+    }
+  }
+
+  const possibleValues = [];
+  // compute possible values;
+  for (let i = 1; i <= 9; i++) {
+    const possibleVal = i.toString();
+    if (!valuesThatAlreadyExist.has(possibleVal)) {
+      possibleValues.push(possibleVal);
+    }
+  }
+  return possibleValues;
 }
 
+const getEmptyIndexes = (sudokuGrid) => {
+  const emptyIndexes = [];
+  for (let i = 0; i < sudokuGrid.length; i++) {
+    for (let j = 0; j < sudokuGrid.length; j++) {
+      const element = sudokuGrid[i][j];
+      if (element === emptyValue) emptyIndexes.push({ i, j });
+    }    
+  }
+  return emptyIndexes;
+}
+
+const emptyIndexes = getEmptyIndexes(sudokuGrid);
+printSudoku(sudokuGrid);
+
+function solve(sudokuGrid, emptyIndexes) {
+  if (emptyIndexes.length === 0) {
+    return true;
+  }
+
+  const emptyIndex = emptyIndexes.shift();
+  const { i, j } = emptyIndex;
+  const possibleValues = getPossibleValues(sudokuGrid, i, j);
+
+  if (possibleValues.length === 0) {
+    emptyIndexes.unshift(emptyIndex);
+    return false;
+  }
+
+  for (const possibleValue of possibleValues) {
+    sudokuGrid[i][j] = possibleValue;
+    if (solve(sudokuGrid, emptyIndexes)) {
+      return true;
+    }
+  }
+
+  sudokuGrid[i][j] = emptyValue;
+  emptyIndexes.unshift(emptyIndex);
+  return false;
+}
+
+solve(sudokuGrid, emptyIndexes);
+
+printSudoku(sudokuGrid);
+printSudoku(sudokuGridSol);
+
 // console.log(emptyIndexes);
-printSudoku(grid);
-
-// do {
-//   const emptyIndex = emptyIndexes.shift();
-//   const { i, j } = emptyIndex;
-//   const box = grid[i][j];
-//   const possibleVals = box.computePossibleValues()
-//   if (possibleVals.length === 1) {
-//     box.value = possibleVals[0];
-//   } else {
-//     emptyIndexes.push(emptyIndex);
-//   }
-// } while (emptyIndexes.length !== 0);
-
-// console.log()
-
-// console.log(box.computePossibleValues());
