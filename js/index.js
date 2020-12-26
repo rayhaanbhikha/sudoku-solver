@@ -108,28 +108,28 @@ function checkSolution(grid, solGrid) {
 }
 
 function solve(sudokuGrid, emptyIndexes) {
-  if (emptyIndexes.length === 0) {
-    return true;
-  }
+  if (emptyIndexes.length === 0) return true;
 
   const emptyIndex = emptyIndexes.shift();
   const { i, j } = emptyIndex;
   const possibleValues = getPossibleValues(sudokuGrid, i, j);
 
-  if (possibleValues.length === 0) {
+  const reset = () => {
+    sudokuGrid[i][j] = emptyValue;
     emptyIndexes.unshift(emptyIndex);
+  }
+
+  if (possibleValues.length === 0) {
+    reset();
     return false;
   }
 
   for (const possibleValue of possibleValues) {
     sudokuGrid[i][j] = possibleValue;
-    if (solve(sudokuGrid, emptyIndexes)) {
-      return true;
-    }
+    if (solve(sudokuGrid, emptyIndexes)) return true;
   }
 
-  sudokuGrid[i][j] = emptyValue;
-  emptyIndexes.unshift(emptyIndex);
+  reset();
   return false;
 }
 
