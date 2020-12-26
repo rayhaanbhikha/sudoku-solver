@@ -129,5 +129,3 @@ console.timeEnd(label);
 
 printSudoku(sudokuGrid);
 printSudoku(sudokuGridSol);
-
-// console.log(emptyIndexes);
